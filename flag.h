@@ -15,12 +15,9 @@ typedef enum
     FLAG_STR,
 } Flag_Type;
 
-void *flag_new(Flag_Type type, const char *name, const char *desc);
-
-#define flag_bool(name, desc) ((bool *)(flag_new(FLAG_BOOL, name, desc)))
-#define flag_uint64(name, desc) ((uint64_t *)(flag_new(FLAG_UINT64, name, desc)))
-#define flag_str(name, desc) ((const char **)(flag_new(FLAG_STR, name, desc)))
-
+bool *flag_bool(const char *name, bool def, const char *desc);
+uint64_t *flag_uint64(const char *name, uint64_t def, const char *desc);
+const char **flag_str(const char *name, const char *def, const char *desc);
 void flag_parse(int argc, char **argv);
 void flag_print_help(FILE *stream);
 
@@ -38,6 +35,7 @@ typedef struct
     const char *name;
     const char *desc;
     uintptr_t data;
+    uintptr_t def;
 } Flag;
 
 #ifndef FLAGS_CAP
@@ -47,17 +45,46 @@ typedef struct
 static Flag flags[FLAGS_CAP];
 static size_t flags_count = 0;
 
-void *flag_new(Flag_Type type, const char *name, const char *desc)
+Flag *flag_new(Flag_Type type, const char *name, const char *desc)
 {
     assert(flags_count < FLAGS_CAP);
     Flag *flag = &flags[flags_count++];
     flag->type = type;
     flag->name = name;
     flag->desc = desc;
-    return &flag->data;
+    return flag;
+}
+
+bool *flag_bool(const char *name, bool def, const char *desc)
+{
+    Flag *flag = flag_new(FLAG_BOOL, name, desc);
+    *((bool *)&flag->def) = def;
+    *((bool *)&flag->data) = def;
+    return (bool *)&flag->data;
+}
+
+uint64_t *flag_uint64(const char *name, uint64_t def, const char *desc)
+{
+    Flag *flag = flag_new(FLAG_UINT64, name, desc);
+    *((uint64_t *)&flag->def) = def;
+    *((uint64_t *)&flag->data) = def;
+    return (uint64_t *)&flag->data;
+}
+
+const char **flag_str(const char *name, const char *def, const char *desc)
+{
+    Flag *flag = flag_new(FLAG_STR, name, desc);
+    *((const char **)&flag->def) = def;
+    *((const char **)&flag->data) = def;
+    return (const char **)&flag->data;
+}
+
+void flag_parse(int argc, char **argv)
+{
+}
+
+void flag_print_help(FILE *stream)
+{
 }
 
 #endif // FLAG_IMPLEMENTATION_
-
-//uint64_t *size = flag_uint64("name", "description");
-//*size = 1337 //Default
