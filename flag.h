@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <inttypes.h>
 
 typedef enum
 {
@@ -42,8 +43,15 @@ typedef struct
 #define FLAGS_CAP 256
 #endif
 
+#ifndef FLAGS_TMP_STR_CAP
+#define FLAGS_TMP_STR_CAP 1024
+#endif
+
 static Flag flags[FLAGS_CAP];
 static size_t flags_count = 0;
+
+static char flags_tmp_str[FLAGS_TMP_STR_CAP];
+static size_t flags_tmp_str_size = 0;
 
 Flag *flag_new(Flag_Type type, const char *name, const char *desc)
 {
@@ -81,10 +89,44 @@ const char **flag_str(const char *name, const char *def, const char *desc)
 
 void flag_parse(int argc, char **argv)
 {
+    (void)argc;
+    (void)argv;
+}
+
+static char *flag_show_data(Flag_Type type, uintptr_t data)
+{
+    switch (type)
+    {
+    case FLAG_BOOL:
+        return (*(bool *)&data) ? "true" : "false";
+    case FLAG_UINT64:
+    {
+        int n = snprintf(NULL, 0, "%" PRIu64, *(uint64_t *)&data);
+        assert(n >= 0);
+        assert(flags_tmp_str_size + n <= FLAGS_TMP_STR_CAP);
+        int m = snprintf(flags_tmp_str + flags_tmp_str_size,
+                         FLAGS_TMP_STR_CAP - flags_tmp_str_size,
+                         "%" PRIu64,
+                         *(uint64_t *)&data);
+        assert(n == m);
+        flags_tmp_str_size += n;
+    }
+    break;
+    case FLAG_STR:
+        return *(const char **)&data;
+    }
 }
 
 void flag_print_help(FILE *stream)
 {
+    for (size_t i = 0; i < flags_count; i++)
+    {
+        fprintf(stream, "    -%s\n", flags[i].name);
+        fprintf(stream,
+                "    %s. (Default: %s)\n",
+                flags[i].desc,
+                flag_show_data(flags[i].type, flags[i].def));
+    }
 }
 
 #endif // FLAG_IMPLEMENTATION_
