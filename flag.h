@@ -107,7 +107,7 @@ void flag_parse(int ac, char **av)
         char *flag = flag_shift_args(&ac, &av);
         if (*flag != '-')
         {
-            fprintf(stderr, "ERROR: %s: unkown flag\n", flag);
+            fprintf(stderr, "ERROR: -%s: unkown flag\n", flag);
             exit(1);
         }
         flag++;
@@ -127,7 +127,7 @@ void flag_parse(int ac, char **av)
                 {
                     if (ac == 0)
                     {
-                        fprintf(stderr, "ERROR: %s: no argument provided\n", flag);
+                        fprintf(stderr, "ERROR: -%s: no argument provided\n", flag);
                         exit(1);
                     }
                     char *arg = flag_shift_args(&ac, &av);
@@ -138,7 +138,7 @@ void flag_parse(int ac, char **av)
                 {
                     if (ac == 0)
                     {
-                        fprintf(stderr, "ERROR: %s: no argument provided\n", flag);
+                        fprintf(stderr, "ERROR: -%s: no argument provided\n", flag);
                         exit(1);
                     }
                     char *arg = flag_shift_args(&ac, &av);
@@ -146,12 +146,12 @@ void flag_parse(int ac, char **av)
                     unsigned long long int result = strtoull(arg, &endptr, 10);
                     if (arg == endptr || *endptr != '\0')
                     {
-                        fprintf(stderr, "ERROR: %s: not a valid number\n", flag);
+                        fprintf(stderr, "ERROR: -%s: not a valid number\n", flag);
                         exit(1);
                     }
                     if (result == ULLONG_MAX && errno == ERANGE)
                     {
-                        fprintf(stderr, "ERROR: %s: 64 bit unsigned integer overflow\n", flag);
+                        fprintf(stderr, "ERROR: -%s: 64 bit unsigned integer overflow\n", flag);
                         exit(0);
                     }
                     *(uint64_t *)&flags[i].data = result;
@@ -184,7 +184,9 @@ static char *flag_show_data(Flag_Type type, uintptr_t data)
                          "%" PRIu64,
                          *(uint64_t *)&data);
         assert(n == m);
+        char *result = flags_tmp_str;
         flags_tmp_str_size += n + 1;
+        return result;
     }
     break;
     case FLAG_STR:
